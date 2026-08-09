@@ -38,11 +38,6 @@ A quick rundown of the actions included can be seen in the following table:
 For more details you can either run VAmPI and visit `http://127.0.0.1:5000/ui/` or use a service like the [swagger editor](https://editor.swagger.io) supplying the OpenAPI specification which can be found in the directory `openapi_specs`.
 
 
-#### List of Vulnerabilities
- - Lack of Resources & Rate Limiting
-
-
-
  ## Run it
 It is a Flask application so in order to run it you can install all requirements and then run the `app.py`.
 To install all requirements simply run `pip3 install -r requirements.txt` and then `python3 app.py`.
@@ -79,6 +74,8 @@ If you would like to alter the timeout of the token created after login or if yo
      - One nice feature to running it this way is you can startup a 2nd container with `vulnerable=1` on a different port and flip easily between the two.
 
 Set `VAMPI_JWT_SECRET` to a deployment secret of at least 32 bytes to keep JWTs valid across restarts. If it is unset, VAmPI generates an unpredictable per-process key.
+
+Rate limiting defaults to 30 requests per client, HTTP method, and route per 60 seconds. Configure it with `VAMPI_RATE_LIMIT` and `VAMPI_RATE_WINDOW`.
 
    - In the Dockerfile you will find two environment variables being set, the `ENV vulnerable=1` and the `ENV tokentimetolive=60`. Feel free to change it before running the docker build command.
 

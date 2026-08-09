@@ -4,6 +4,7 @@ import connexion
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 from connexion.exceptions import ProblemException
+from rate_limiter import configure_rate_limiting
 
 vuln_app = connexion.App(__name__, specification_dir='./openapi_specs')
 
@@ -23,6 +24,7 @@ def load_jwt_secret():
 
 # ASVS 13.3.1: production deployments inject this secret via the environment.
 vuln_app.app.config['SECRET_KEY'] = load_jwt_secret()
+configure_rate_limiting(vuln_app.app)
 # start the db
 db = SQLAlchemy(vuln_app.app)
 
