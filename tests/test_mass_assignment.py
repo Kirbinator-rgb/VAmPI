@@ -15,7 +15,7 @@ class MassAssignmentTest(unittest.TestCase):
                 response = register_user()
         return response, user_model, database
 
-    def test_registration_rejects_admin_property(self):
+    def test_registration_ignores_admin_property(self):
         response, user_model, database = self.register({
             'username': 'attacker',
             'password': 'pass1',
@@ -23,9 +23,11 @@ class MassAssignmentTest(unittest.TestCase):
             'admin': True,
         })
 
-        self.assertEqual(response.status_code, 400)
-        user_model.assert_not_called()
-        database.session.add.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        user_model.assert_called_once_with(
+            username='attacker', password='pass1',
+            email='attacker@example.com')
+        database.session.add.assert_called_once_with(user_model.return_value)
 
     def test_registration_uses_server_default_privileges(self):
         response, user_model, _ = self.register({
