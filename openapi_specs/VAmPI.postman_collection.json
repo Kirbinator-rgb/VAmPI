@@ -752,56 +752,7 @@
 				},
 				"description": "Update users password"
 			},
-			"response": [
-				{
-					"name": "Update password of another user",
-					"originalRequest": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"password\": \"test2\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/users/v1/:username/password",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"v1",
-								":username",
-								"password"
-							],
-							"variable": [
-								{
-									"key": "username",
-									"value": "admin",
-									"description": "(Required) username to update password"
-								}
-							]
-						}
-					},
-					"_postman_previewlanguage": "Text",
-					"header": [],
-					"cookie": [],
-					"body": ""
-				}
-			]
+			"response": []
 		},
 		{
 			"name": "Deletes user by username (Only Admins)",

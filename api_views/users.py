@@ -172,18 +172,15 @@ def update_password(username):
     if "error" in resp:
         return Response(error_message_helper(resp), 401, mimetype="application/json")
     else:
+        # ASVS 8.2.2: the authenticated identity owns this credential.
+        if username != resp['sub']:
+            return Response(error_message_helper("Forbidden"), 403, mimetype="application/json")
         if request_data.get('password'):
-            if vuln:  # Unauthorized update of password of another user
-                user = User.query.filter_by(username=username).first()
-                if user:
-                    user.password = request_data.get('password')
-                    db.session.commit()
-                else:
-                    return Response(error_message_helper("User Not Found"), 400, mimetype="application/json")
-            else:
-                user = User.query.filter_by(username=resp['sub']).first()
-                user.password = request_data.get('password')
-                db.session.commit()
+            user = User.query.filter_by(username=resp['sub']).first()
+            if not user:
+                return Response(error_message_helper("User Not Found"), 404, mimetype="application/json")
+            user.password = request_data.get('password')
+            db.session.commit()
             responseObject = {
                 'status': 'success',
                 'Password': 'Updated.'

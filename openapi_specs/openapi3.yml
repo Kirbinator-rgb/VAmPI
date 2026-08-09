@@ -451,6 +451,20 @@ paths:
                   message:
                     type: string
                     example: 'Invalid token. Please log in again.'
+        '403':
+          description: Authenticated user cannot update another user's password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ['fail']
+                    example: 'fail'
+                  message:
+                    type: string
+                    example: 'Forbidden'
   /books/v1:
     get:
       tags:
