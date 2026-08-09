@@ -1,4 +1,5 @@
 import os
+import secrets
 import connexion
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -10,7 +11,18 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(vuln_app.app.root_path, 'd
 vuln_app.app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 vuln_app.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-vuln_app.app.config['SECRET_KEY'] = 'random'
+def load_jwt_secret():
+    configured_secret = os.getenv('VAMPI_JWT_SECRET')
+    if configured_secret:
+        if len(configured_secret.encode('utf-8')) < 32:
+            raise RuntimeError('VAMPI_JWT_SECRET must be at least 32 bytes')
+        return configured_secret
+    # ASVS 11.5.1: generate at least 128 bits of unpredictable key material.
+    return secrets.token_urlsafe(32)
+
+
+# ASVS 13.3.1: production deployments inject this secret via the environment.
+vuln_app.app.config['SECRET_KEY'] = load_jwt_secret()
 # start the db
 db = SQLAlchemy(vuln_app.app)
 
