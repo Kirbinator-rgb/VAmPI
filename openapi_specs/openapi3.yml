@@ -179,7 +179,7 @@ paths:
                     example: 'fail'
                   message:
                     type: string
-                    example: 'Password is not correct for the given username.'
+                    example: 'Username or Password Incorrect!'
   /me:
     get:
         security:

@@ -425,7 +425,7 @@
 					"_postman_previewlanguage": "Text",
 					"header": [],
 					"cookie": [],
-					"body": "{\n    \"status\": \"fail\",\n    \"message\": \"Password is not correct for the given username.\"\n}"
+					"body": "{\n    \"status\": \"fail\",\n    \"message\": \"Username or Password Incorrect!\"\n}"
 				},
 				{
 					"name": "Login to VAmPI (wrong user exploit)",
@@ -467,7 +467,7 @@
 					"_postman_previewlanguage": "Text",
 					"header": [],
 					"cookie": [],
-					"body": "{\n    \"status\": \"fail\",\n    \"message\": \"Username does not exist\"\n}"
+					"body": "{\n    \"status\": \"fail\",\n    \"message\": \"Username or Password Incorrect!\"\n}"
 				}
 			]
 		},

@@ -8,6 +8,9 @@ from flask import jsonify, Response, request, json
 from models.user_model import User
 from app import vuln
 
+AUTHENTICATION_FAILURE_MESSAGE = "Username or Password Incorrect!"
+REGISTRATION_RESPONSE_MESSAGE = "Successfully registered. Login to receive an auth token."
+
 
 def error_message_helper(msg):
     if isinstance(msg, dict):
@@ -68,14 +71,19 @@ def register_user():
 
             responseObject = {
                 'status': 'success',
-                'message': 'Successfully registered. Login to receive an auth token.'
+                'message': REGISTRATION_RESPONSE_MESSAGE
             }
 
             return Response(json.dumps(responseObject), 200, mimetype="application/json")
         except jsonschema.exceptions.ValidationError as exc:
             return Response(error_message_helper(exc.message), 400, mimetype="application/json")
     else:
-        return Response(error_message_helper("User already exists. Please Log in."), 200, mimetype="application/json")
+        # ASVS 6.3.8: duplicate registration must not reveal valid usernames.
+        responseObject = {
+            'status': 'success',
+            'message': REGISTRATION_RESPONSE_MESSAGE
+        }
+        return Response(json.dumps(responseObject), 200, mimetype="application/json")
 
 
 def login_user():
@@ -94,16 +102,9 @@ def login_user():
                 'auth_token': auth_token
             }
             return Response(json.dumps(responseObject), 200, mimetype="application/json")
-        if vuln:  # Password Enumeration
-            if user and request_data.get('password') != user.password:
-                return Response(error_message_helper("Password is not correct for the given username."), 200,
-                                mimetype="application/json")
-            elif not user:  # User enumeration
-                return Response(error_message_helper("Username does not exist"), 200, mimetype="application/json")
-        else:
-            if (user and request_data.get('password') != user.password) or (not user):
-                return Response(error_message_helper("Username or Password Incorrect!"), 200,
-                                mimetype="application/json")
+        # ASVS 6.3.8: use one response for unknown users and invalid passwords.
+        return Response(error_message_helper(AUTHENTICATION_FAILURE_MESSAGE), 200,
+                        mimetype="application/json")
     except jsonschema.exceptions.ValidationError as exc:
         return Response(error_message_helper(exc.message), 400, mimetype="application/json")
     except:
