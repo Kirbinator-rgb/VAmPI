@@ -197,44 +197,6 @@
 			"response": []
 		},
 		{
-			"name": "Retrieves all details for all users (debug)",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Accept",
-						"value": "application/json"
-					}
-				],
-				"url": {
-					"raw": "{{baseUrl}}/users/v1/_debug",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"users",
-						"v1",
-						"_debug"
-					]
-				},
-				"description": "Displays all details for all users"
-			},
-			"response": []
-		},
-		{
 			"name": "Retrieves all books",
 			"event": [
 				{

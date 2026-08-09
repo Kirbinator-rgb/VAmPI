@@ -55,16 +55,9 @@ class User(db.Model):
     def json(self):
         return {'username': self.username, 'email': self.email}
 
-    def json_debug(self):
-        return {'username': self.username, 'password': self.password, 'email': self.email, 'admin': self.admin}
-
     @staticmethod
     def get_all_users():
         return [User.json(user) for user in User.query.all()]
-
-    @staticmethod
-    def get_all_users_debug():
-        return [User.json_debug(user) for user in User.query.all()]
 
     @staticmethod
     def get_user(username):
