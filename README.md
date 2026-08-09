@@ -75,7 +75,7 @@ If you would like to alter the timeout of the token created after login or if yo
 
 Set `VAMPI_JWT_SECRET` to a deployment secret of at least 32 bytes to keep JWTs valid across restarts. If it is unset, VAmPI generates an unpredictable per-process key.
 
-Rate limiting defaults to 30 requests per client, HTTP method, and route per 60 seconds. Configure it with `VAMPI_RATE_LIMIT` and `VAMPI_RATE_WINDOW`.
+Login and registration are limited to 5 requests per client and route per 60 seconds. Configure the limit and window with `VAMPI_RATE_LIMIT` and `VAMPI_RATE_WINDOW`.
 
    - In the Dockerfile you will find two environment variables being set, the `ENV vulnerable=1` and the `ENV tokentimetolive=60`. Feel free to change it before running the docker build command.
 

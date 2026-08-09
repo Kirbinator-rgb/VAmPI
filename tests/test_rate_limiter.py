@@ -30,19 +30,33 @@ class RateLimiterTest(unittest.TestCase):
     def test_flask_returns_429_and_retry_after(self):
         app = Flask(__name__)
         limiter = SlidingWindowRateLimiter(2, 60, clock=lambda: 0)
-        configure_rate_limiting(app, limiter)
+        configure_rate_limiting(
+            app, limiter, limited_routes={('POST', '/users/v1/login')})
 
-        @app.get('/resource')
-        def resource():
+        @app.post('/users/v1/login')
+        def login():
             return {'status': 'ok'}
 
         client = app.test_client()
-        self.assertEqual(client.get('/resource').status_code, 200)
-        self.assertEqual(client.get('/resource').status_code, 200)
-        response = client.get('/resource')
+        self.assertEqual(client.post('/users/v1/login').status_code, 200)
+        self.assertEqual(client.post('/users/v1/login').status_code, 200)
+        response = client.post('/users/v1/login')
 
         self.assertEqual(response.status_code, 429)
         self.assertEqual(response.headers['Retry-After'], '60')
+
+    def test_unrelated_routes_are_not_rate_limited(self):
+        app = Flask(__name__)
+        limiter = SlidingWindowRateLimiter(1, 60, clock=lambda: 0)
+        configure_rate_limiting(app, limiter)
+
+        @app.get('/users/v1')
+        def users():
+            return {'status': 'ok'}
+
+        client = app.test_client()
+        self.assertEqual(client.get('/users/v1').status_code, 200)
+        self.assertEqual(client.get('/users/v1').status_code, 200)
 
 
 if __name__ == '__main__':

@@ -6,6 +6,12 @@ from threading import Lock
 from flask import jsonify, request
 
 
+DEFAULT_LIMITED_ROUTES = frozenset({
+    ('POST', '/users/v1/login'),
+    ('POST', '/users/v1/register'),
+})
+
+
 class SlidingWindowRateLimiter:
     def __init__(self, limit, window_seconds, clock=time.monotonic):
         if limit <= 0 or window_seconds <= 0:
@@ -44,17 +50,22 @@ class SlidingWindowRateLimiter:
             return True, 0
 
 
-def configure_rate_limiting(app, limiter=None):
+def configure_rate_limiting(app, limiter=None, limited_routes=None):
     limiter = limiter or SlidingWindowRateLimiter(
-        limit=int(os.getenv('VAMPI_RATE_LIMIT', 30)),
+        limit=int(os.getenv('VAMPI_RATE_LIMIT', 5)),
         window_seconds=int(os.getenv('VAMPI_RATE_WINDOW', 60)))
+    limited_routes = frozenset(
+        DEFAULT_LIMITED_ROUTES if limited_routes is None else limited_routes)
 
     @app.before_request
     def enforce_rate_limit():
         if request.method == 'OPTIONS':
             return None
         route = request.url_rule.rule if request.url_rule else request.path
-        key = (request.remote_addr or 'unknown', request.method, route)
+        operation = (request.method, route)
+        if operation not in limited_routes:
+            return None
+        key = (request.remote_addr or 'unknown', operation)
         allowed, retry_after = limiter.check(key)
         if allowed:
             return None
