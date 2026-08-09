@@ -1,5 +1,6 @@
 register_user_schema = {
     "type": "object",
+    "additionalProperties": False,
     "properties": {
         "username": {"type": "string"},
         "password": {"type": "string"},

