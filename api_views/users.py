@@ -1,4 +1,3 @@
-import re
 import jsonschema
 import jwt
 
@@ -6,7 +5,34 @@ from config import db, vuln_app
 from api_views.json_schemas import *
 from flask import jsonify, Response, request, json
 from models.user_model import User
-from app import vuln
+
+AUTHENTICATION_FAILURE_MESSAGE = "Username or Password Incorrect!"
+REGISTRATION_RESPONSE_MESSAGE = "Successfully registered. Login to receive an auth token."
+EMAIL_LOCAL_CHARACTERS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!#$%&'*+/=?^_`{|}~-")
+EMAIL_DOMAIN_CHARACTERS = frozenset(
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-')
+
+
+def is_valid_email(email):
+    # ASVS 1.2.9: bounded, non-regex parsing avoids attacker-controlled backtracking.
+    if not isinstance(email, str) or len(email) > 254 or email.count('@') != 1:
+        return False
+    local_part, domain = email.rsplit('@', 1)
+    if not local_part or len(local_part) > 64:
+        return False
+    if any(character not in EMAIL_LOCAL_CHARACTERS for character in local_part):
+        return False
+    labels = domain.split('.')
+    if len(labels) < 2 or len(labels[-1]) < 2:
+        return False
+    return all(
+        0 < len(label) <= 63
+        and label[0] != '-'
+        and label[-1] != '-'
+        and all(character in EMAIL_DOMAIN_CHARACTERS for character in label)
+        for label in labels
+    )
 
 
 def error_message_helper(msg):
@@ -20,10 +46,6 @@ def get_all_users():
     return_value = jsonify({'users': User.get_all_users()})
     return return_value
 
-
-def debug():
-    return_value = jsonify({'users': User.get_all_users_debug()})
-    return return_value
 
 def me():
     resp = token_validator(request.headers.get('Authorization'))
@@ -57,29 +79,27 @@ def register_user():
         try:
             # validate the data are in the correct form
             jsonschema.validate(request_data, register_user_schema)
-            if vuln and 'admin' in request_data:  # User is possible to define if she/he wants to be an admin !!
-                if request_data['admin']:
-                    admin = True
-                else:
-                    admin = False
-                user = User(username=request_data['username'], password=request_data['password'],
-                            email=request_data['email'], admin=admin)
-            else:
-                user = User(username=request_data['username'], password=request_data['password'],
-                            email=request_data['email'])
+            # ASVS 8.2.3: privilege fields are server-owned and never accepted here.
+            user = User(username=request_data['username'], password=request_data['password'],
+                        email=request_data['email'])
             db.session.add(user)
             db.session.commit()
 
             responseObject = {
                 'status': 'success',
-                'message': 'Successfully registered. Login to receive an auth token.'
+                'message': REGISTRATION_RESPONSE_MESSAGE
             }
 
             return Response(json.dumps(responseObject), 200, mimetype="application/json")
         except jsonschema.exceptions.ValidationError as exc:
             return Response(error_message_helper(exc.message), 400, mimetype="application/json")
     else:
-        return Response(error_message_helper("User already exists. Please Log in."), 200, mimetype="application/json")
+        # ASVS 6.3.8: duplicate registration must not reveal valid usernames.
+        responseObject = {
+            'status': 'success',
+            'message': REGISTRATION_RESPONSE_MESSAGE
+        }
+        return Response(json.dumps(responseObject), 200, mimetype="application/json")
 
 
 def login_user():
@@ -98,16 +118,9 @@ def login_user():
                 'auth_token': auth_token
             }
             return Response(json.dumps(responseObject), 200, mimetype="application/json")
-        if vuln:  # Password Enumeration
-            if user and request_data.get('password') != user.password:
-                return Response(error_message_helper("Password is not correct for the given username."), 200,
-                                mimetype="application/json")
-            elif not user:  # User enumeration
-                return Response(error_message_helper("Username does not exist"), 200, mimetype="application/json")
-        else:
-            if (user and request_data.get('password') != user.password) or (not user):
-                return Response(error_message_helper("Username or Password Incorrect!"), 200,
-                                mimetype="application/json")
+        # ASVS 6.3.8: use one response for unknown users and invalid passwords.
+        return Response(error_message_helper(AUTHENTICATION_FAILURE_MESSAGE), 200,
+                        mimetype="application/json")
     except jsonschema.exceptions.ValidationError as exc:
         return Response(error_message_helper(exc.message), 400, mimetype="application/json")
     except:
@@ -139,41 +152,21 @@ def update_email(username):
     if "error" in resp:
         return Response(error_message_helper(resp), 401, mimetype="application/json")
     else:
+        email = request_data.get('email')
+        if not is_valid_email(email):
+            return Response(error_message_helper("Please Provide a valid email address."), 400,
+                            mimetype="application/json")
         user = User.query.filter_by(username=resp['sub']).first()
-        if vuln:  # Regex DoS
-            match = re.search(
-                r"^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@{1}([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$",
-                str(request_data.get('email')))
-            if match:
-                user.email = request_data.get('email')
-                db.session.commit()
-                responseObject = {
-                    'status': 'success',
-                    'data': {
-                        'username': user.username,
-                        'email': user.email
-                    }
-                }
-                return Response(json.dumps(responseObject), 204, mimetype="application/json")
-            else:
-                return Response(error_message_helper("Please Provide a valid email address."), 400,
-                                mimetype="application/json")
-        else:
-            regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
-            if (re.search(regex, request_data.get('email'))):
-                user.email = request_data.get('email')
-                db.session.commit()
-                responseObject = {
-                    'status': 'success',
-                    'data': {
-                        'username': user.username,
-                        'email': user.email
-                    }
-                }
-                return Response(json.dumps(responseObject), 204, mimetype="application/json")
-            else:
-                return Response(error_message_helper("Please Provide a valid email address."), 400,
-                                mimetype="application/json")
+        user.email = email
+        db.session.commit()
+        responseObject = {
+            'status': 'success',
+            'data': {
+                'username': user.username,
+                'email': user.email
+            }
+        }
+        return Response(json.dumps(responseObject), 204, mimetype="application/json")
 
 
 def update_password(username):
@@ -182,18 +175,15 @@ def update_password(username):
     if "error" in resp:
         return Response(error_message_helper(resp), 401, mimetype="application/json")
     else:
+        # ASVS 8.2.2: the authenticated identity owns this credential.
+        if username != resp['sub']:
+            return Response(error_message_helper("Forbidden"), 403, mimetype="application/json")
         if request_data.get('password'):
-            if vuln:  # Unauthorized update of password of another user
-                user = User.query.filter_by(username=username).first()
-                if user:
-                    user.password = request_data.get('password')
-                    db.session.commit()
-                else:
-                    return Response(error_message_helper("User Not Found"), 400, mimetype="application/json")
-            else:
-                user = User.query.filter_by(username=resp['sub']).first()
-                user.password = request_data.get('password')
-                db.session.commit()
+            user = User.query.filter_by(username=resp['sub']).first()
+            if not user:
+                return Response(error_message_helper("User Not Found"), 404, mimetype="application/json")
+            user.password = request_data.get('password')
+            db.session.commit()
             responseObject = {
                 'status': 'success',
                 'Password': 'Updated.'

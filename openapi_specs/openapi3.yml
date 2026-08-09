@@ -85,38 +85,6 @@ paths:
                         username:
                           type: string
                           example: 'name1'
-  /users/v1/_debug:
-    get:
-      tags:
-        - users
-      summary: Retrieves all details for all users
-      description: Displays all details for all users
-      operationId: api_views.users.debug
-      responses:
-        '200':
-          description: See all details of the users
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  users:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        admin:
-                          type: boolean
-                          example: false
-                        email:
-                          type: string
-                          example: 'mail1@mail.com'
-                        password:
-                          type: string
-                          example: 'pass1'
-                        username:
-                          type: string
-                          example: 'name1'
   /users/v1/register:
     post:
       tags:
@@ -211,7 +179,7 @@ paths:
                     example: 'fail'
                   message:
                     type: string
-                    example: 'Password is not correct for the given username.'
+                    example: 'Username or Password Incorrect!'
   /me:
     get:
         security:
@@ -483,6 +451,20 @@ paths:
                   message:
                     type: string
                     example: 'Invalid token. Please log in again.'
+        '403':
+          description: Authenticated user cannot update another user's password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ['fail']
+                    example: 'fail'
+                  message:
+                    type: string
+                    example: 'Forbidden'
   /books/v1:
     get:
       tags:

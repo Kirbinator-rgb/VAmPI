@@ -25,7 +25,6 @@ A quick rundown of the actions included can be seen in the following table:
 |     GET    |               /               |                     VAmPI home                     |
 |     GET    |               /me             |           Displays the user that is logged in       |
 |     GET    |           /users/v1           |      Displays all users with basic information     |
-|     GET    |        /users/v1/_debug       |         Displays all details for all users         |
 |    POST    |       /users/v1/register      |                  Register new user                 |
 |    POST    |        /users/v1/login        |                   Login to VAmPI                   |
 |     GET    |      /users/v1/{username}     |              Displays user by username             |
@@ -37,19 +36,6 @@ A quick rundown of the actions included can be seen in the following table:
 |     GET    |        /books/v1/{book}       |      Retrieves book by title along with secret     |
 
 For more details you can either run VAmPI and visit `http://127.0.0.1:5000/ui/` or use a service like the [swagger editor](https://editor.swagger.io) supplying the OpenAPI specification which can be found in the directory `openapi_specs`.
-
-
-#### List of Vulnerabilities
- - SQLi Injection
- - Unauthorized Password Change
- - Broken Object Level Authorization
- - Mass Assignment
- - Excessive Data Exposure through debug endpoint
- - User and Password Enumeration
- - RegexDOS (Denial of Service)
- - Lack of Resources & Rate Limiting
- - JWT authentication bypass via weak signing key
-
 
 
  ## Run it
@@ -87,6 +73,10 @@ If you would like to alter the timeout of the token created after login or if yo
    - Docker run example: `docker run -d -e vulnerable=0 -e tokentimetolive=300 -p 5000:5000 erev0s/vampi:latest`
      - One nice feature to running it this way is you can startup a 2nd container with `vulnerable=1` on a different port and flip easily between the two.
 
+Set `VAMPI_JWT_SECRET` to a deployment secret of at least 32 bytes to keep JWTs valid across restarts. If it is unset, VAmPI generates an unpredictable per-process key.
+
+Login and registration are limited to 5 requests per client and route per 60 seconds. Configure the limit and window with `VAMPI_RATE_LIMIT` and `VAMPI_RATE_WINDOW`.
+
    - In the Dockerfile you will find two environment variables being set, the `ENV vulnerable=1` and the `ENV tokentimetolive=60`. Feel free to change it before running the docker build command.
 
 
@@ -95,4 +85,3 @@ If you would like to alter the timeout of the token created after login or if yo
    - Make sure to issue a request towards the endpoint `/createdb` in order to populate the database.
 
  [Picture from freepik - www.freepik.com](https://www.freepik.com/vectors/party)
-
