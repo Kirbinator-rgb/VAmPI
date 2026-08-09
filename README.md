@@ -39,7 +39,6 @@ For more details you can either run VAmPI and visit `http://127.0.0.1:5000/ui/` 
 
 
 #### List of Vulnerabilities
- - SQLi Injection
  - Unauthorized Password Change
  - Broken Object Level Authorization
  - Mass Assignment

