@@ -1,4 +1,3 @@
-import re
 import jsonschema
 import jwt
 
@@ -6,10 +5,34 @@ from config import db, vuln_app
 from api_views.json_schemas import *
 from flask import jsonify, Response, request, json
 from models.user_model import User
-from app import vuln
 
 AUTHENTICATION_FAILURE_MESSAGE = "Username or Password Incorrect!"
 REGISTRATION_RESPONSE_MESSAGE = "Successfully registered. Login to receive an auth token."
+EMAIL_LOCAL_CHARACTERS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!#$%&'*+/=?^_`{|}~-")
+EMAIL_DOMAIN_CHARACTERS = frozenset(
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-')
+
+
+def is_valid_email(email):
+    # ASVS 1.2.9: bounded, non-regex parsing avoids attacker-controlled backtracking.
+    if not isinstance(email, str) or len(email) > 254 or email.count('@') != 1:
+        return False
+    local_part, domain = email.rsplit('@', 1)
+    if not local_part or len(local_part) > 64:
+        return False
+    if any(character not in EMAIL_LOCAL_CHARACTERS for character in local_part):
+        return False
+    labels = domain.split('.')
+    if len(labels) < 2 or len(labels[-1]) < 2:
+        return False
+    return all(
+        0 < len(label) <= 63
+        and label[0] != '-'
+        and label[-1] != '-'
+        and all(character in EMAIL_DOMAIN_CHARACTERS for character in label)
+        for label in labels
+    )
 
 
 def error_message_helper(msg):
@@ -129,41 +152,21 @@ def update_email(username):
     if "error" in resp:
         return Response(error_message_helper(resp), 401, mimetype="application/json")
     else:
+        email = request_data.get('email')
+        if not is_valid_email(email):
+            return Response(error_message_helper("Please Provide a valid email address."), 400,
+                            mimetype="application/json")
         user = User.query.filter_by(username=resp['sub']).first()
-        if vuln:  # Regex DoS
-            match = re.search(
-                r"^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@{1}([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$",
-                str(request_data.get('email')))
-            if match:
-                user.email = request_data.get('email')
-                db.session.commit()
-                responseObject = {
-                    'status': 'success',
-                    'data': {
-                        'username': user.username,
-                        'email': user.email
-                    }
-                }
-                return Response(json.dumps(responseObject), 204, mimetype="application/json")
-            else:
-                return Response(error_message_helper("Please Provide a valid email address."), 400,
-                                mimetype="application/json")
-        else:
-            regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
-            if (re.search(regex, request_data.get('email'))):
-                user.email = request_data.get('email')
-                db.session.commit()
-                responseObject = {
-                    'status': 'success',
-                    'data': {
-                        'username': user.username,
-                        'email': user.email
-                    }
-                }
-                return Response(json.dumps(responseObject), 204, mimetype="application/json")
-            else:
-                return Response(error_message_helper("Please Provide a valid email address."), 400,
-                                mimetype="application/json")
+        user.email = email
+        db.session.commit()
+        responseObject = {
+            'status': 'success',
+            'data': {
+                'username': user.username,
+                'email': user.email
+            }
+        }
+        return Response(json.dumps(responseObject), 204, mimetype="application/json")
 
 
 def update_password(username):
